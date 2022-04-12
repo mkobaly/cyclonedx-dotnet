@@ -1,4 +1,4 @@
-﻿// This file is part of CycloneDX Tool for .NET
+// This file is part of CycloneDX Tool for .NET
 //
 // Licensed under the Apache License, Version 2.0 (the “License”);
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CycloneDX.Models;
 using License = CycloneDX.Models.v1_3.License;
+using NuGet.Packaging;
 
 namespace CycloneDX.Services
 {
@@ -56,12 +57,12 @@ namespace CycloneDX.Services
         public GitHubLicenseResolutionException(string message, Exception innerException) : base(message, innerException) {}
     }
 
-    public interface IGithubService
-    {
-        Task<License> GetLicenseAsync(string licenseUrl);
-    }
+    //public interface IGithubService
+    //{
+    //    Task<License> GetLicenseAsync(string licenseUrl);
+    //}
 
-    public class GithubService : IGithubService
+    public class GithubService : ILicenseLookupService
     {
 
         private string _baseUrl = "https://api.github.com/";
@@ -71,6 +72,8 @@ namespace CycloneDX.Services
             new Regex(@"^https?\:\/\/github\.com\/(?<repositoryId>[^\/]+\/[^\/]+)\/((blob)|(raw))\/(?<refSpec>[^\/]+)\/[Ll][Ii][Cc][Ee][Nn][Ss][Ee]((\.|-)((md)|([Tt][Xx][Tt])|([Mm][Ii][Tt])|([Bb][Ss][Dd])))?$"),
             new Regex(@"^https?\:\/\/raw\.github(usercontent)?\.com\/(?<repositoryId>[^\/]+\/[^\/]+)\/(?<refSpec>[^\/]+)\/[Ll][Ii][Cc][Ee][Nn][Ss][Ee]((\.|-)((md)|([Tt][Xx][Tt])|([Mm][Ii][Tt])|([Bb][Ss][Dd])))?$"),
         };
+
+        public int Priority => 3;
 
         public GithubService(HttpClient httpClient)
         {
@@ -111,9 +114,13 @@ namespace CycloneDX.Services
         /// </summary>
         /// <param name="licenseUrl">URL for the license file. Supporting both github.com and raw.githubusercontent.com URLs.</param>
         /// <returns></returns>
-        public async Task<License> GetLicenseAsync(string licenseUrl)
+        public async Task<License> GetLicenseAsync(NuspecReader nuspecReader)
         {
-            if (licenseUrl == null) return null;
+
+            if (nuspecReader == null) return null;
+            var licenseUrl = nuspecReader.GetLicenseUrl();
+            if (string.IsNullOrWhiteSpace(licenseUrl)) return null;
+            
 
             // Detect correct repository id starting from URL
             Match match = null;
@@ -131,7 +138,7 @@ namespace CycloneDX.Services
 
             // GitHub API doesn't necessarily return the correct license for any ref other than master
             // support ticket has been raised, in the meantime will ignore non-master refs
-            if (refSpec.ToString() != "master") return null;
+            //if (refSpec.ToString() != "master") return null;
 
             Console.WriteLine($"Retrieving GitHub license for repository {repositoryId} and ref {refSpec}");
 

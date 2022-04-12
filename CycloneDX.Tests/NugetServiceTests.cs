@@ -29,6 +29,8 @@ using Moq;
 using RichardSzalay.MockHttp;
 using XFS = System.IO.Abstractions.TestingHelpers.MockUnixSupport;
 using CycloneDX.Services;
+using NuGet.Packaging;
+using System.IO.Abstractions;
 
 namespace CycloneDX.Tests
 {
@@ -47,10 +49,12 @@ namespace CycloneDX.Tests
                 XFS.Path(@"c:\nugetcache1"),
                 XFS.Path(@"c:\nugetcache2"),
             };
-            var mockGithubService = new Mock<IGithubService>();
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 mockFileSystem,
                 cachePaths,
+                licenseMemCache,
                 mockGithubService.Object,
                 new HttpClient());
 
@@ -72,10 +76,14 @@ namespace CycloneDX.Tests
             {
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.nuspec"), new MockFileData(nuspecFileContents) },
             });
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 mockFileSystem,
                 new List<string> { XFS.Path(@"c:\nugetcache") },
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 new HttpClient());
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
@@ -92,7 +100,7 @@ namespace CycloneDX.Tests
                     <id>testpackage</id>
                 </metadata>
                 </package>";
-            byte[] sampleHash = new byte[]{1,2,3,4,5,6,78,125,200};
+            byte[] sampleHash = new byte[] { 1, 2, 3, 4, 5, 6, 78, 125, 200 };
 
             var nugetHashFileContents = Convert.ToBase64String(sampleHash);
             var mockFileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
@@ -100,16 +108,19 @@ namespace CycloneDX.Tests
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.nuspec"), new MockFileData(nuspecFileContents) },
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.1.0.0.nupkg.sha512"), new MockFileData(nugetHashFileContents) },
             });
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 mockFileSystem,
                 new List<string> { XFS.Path(@"c:\nugetcache") },
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 new HttpClient());
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
 
             Assert.Equal(Hash.HashAlgorithm.SHA_512, component.Hashes[0].Alg);
-            Assert.Equal(BitConverter.ToString(sampleHash).Replace("-", string.Empty), component.Hashes[0].Content);
+            Assert.Equal(BitConverter.ToString(sampleHash).ToLower().Replace("-", string.Empty), component.Hashes[0].Content);
         }
 
         [Fact]
@@ -128,10 +139,14 @@ namespace CycloneDX.Tests
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.nuspec"), new MockFileData(nuspecFileContents) },
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.1.0.0.nupkg"), new MockFileData(nugetFileContent) },
             });
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 mockFileSystem,
                 new List<string> { XFS.Path(@"c:\nugetcache") },
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 new HttpClient());
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
@@ -143,7 +158,7 @@ namespace CycloneDX.Tests
             }
 
             Assert.Equal(Hash.HashAlgorithm.SHA_512, component.Hashes[0].Alg);
-            Assert.Equal(BitConverter.ToString(hashBytes).Replace("-", string.Empty), component.Hashes[0].Content);
+            Assert.Equal(BitConverter.ToString(hashBytes).ToLower().Replace("-", string.Empty), component.Hashes[0].Content);
         }
 
         [Fact]
@@ -162,10 +177,14 @@ namespace CycloneDX.Tests
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.nuspec"), new MockFileData(nuspecFileContents) },
                 { XFS.Path(@"c:\nugetcache\testpackage\1.0.0\testpackage.1.0.0.nupkg"), new MockFileData(nugetFileContent) },
             });
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 mockFileSystem,
                 new List<string> { XFS.Path(@"c:\nugetcache") },
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 new HttpClient(),
                 disableHashComputation: true);
 
@@ -187,10 +206,14 @@ namespace CycloneDX.Tests
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/testpackage/1.0.0/testpackage.nuspec")
                 .Respond("application/xml", mockResponseContent);
             var client = mockHttp.ToHttpClient();
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 client);
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
@@ -214,10 +237,14 @@ namespace CycloneDX.Tests
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/testpackage/1.0.0/testpackage.1.0.0.nupkg")
                 .Respond("application/xml", mockNugetResponseContent);
             var client = mockHttp.ToHttpClient();
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 client);
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
@@ -231,7 +258,7 @@ namespace CycloneDX.Tests
 
             Assert.Equal("testpackage", component.Name);
             Assert.Equal(Hash.HashAlgorithm.SHA_512, component.Hashes[0].Alg);
-            Assert.Equal(BitConverter.ToString(hashBytes).Replace("-", string.Empty), component.Hashes[0].Content);
+            Assert.Equal(BitConverter.ToString(hashBytes).ToLower().Replace("-", string.Empty), component.Hashes[0].Content);
         }
 
         [Fact]
@@ -247,10 +274,14 @@ namespace CycloneDX.Tests
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/testpackage/1.0.0/testpackage.nuspec")
                 .Respond("application/xml", mockNuspecResponseContent);
             var client = mockHttp.ToHttpClient();
+
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 client,
                 disableHashComputation: true);
 
@@ -268,10 +299,13 @@ namespace CycloneDX.Tests
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/testpackage/1.0.0/testpackage.nuspec")
                 .Respond(HttpStatusCode.NotFound);
             var client = mockHttp.ToHttpClient();
+            var mockGithubService = new Mock<List<ILicenseLookupService>>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
-                new Mock<IGithubService>().Object,
+                licenseMemCache,
+                mockGithubService.Object,
                 client);
 
             var component = await nugetService.GetComponentAsync("testpackage", "1.0.0", Component.ComponentScope.Required).ConfigureAwait(false);
@@ -285,16 +319,17 @@ namespace CycloneDX.Tests
             var mockResponseContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
                 <package xmlns=""http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"">
                 <metadata>
-                    <licenseUrl>https://www.example.com/license</licenseUrl>
+                    <licenseUrl>https://www.example.com/LICENSE</licenseUrl>
                 </metadata>
                 </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/PackageName/1.2.3/PackageName.nuspec")
                 .Respond("application/xml", mockResponseContent);
             var client = mockHttp.ToHttpClient();
-            var mockGithubService = new Mock<IGithubService>();
+            var mockGithubService = new Mock<ILicenseLookupService>();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             mockGithubService
-                .Setup(service => service.GetLicenseAsync(It.IsAny<string>()))
+                .Setup(service => service.GetLicenseAsync(It.IsAny<NuspecReader>()))
                 .ReturnsAsync(new Models.v1_3.License
                 {
                     Id = "TestLicenseId",
@@ -304,13 +339,15 @@ namespace CycloneDX.Tests
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
-                mockGithubService.Object,
+                licenseMemCache,
+                new List<ILicenseLookupService> { mockGithubService.Object },
                 client);
 
             var component = await nugetService.GetComponentAsync("PackageName", "1.2.3", Component.ComponentScope.Required).ConfigureAwait(false);
 
             Assert.Collection(component.Licenses,
-                item => {
+                item =>
+                {
                     Assert.Equal("TestLicenseId", item.License.Id);
                     Assert.Equal("Test License", item.License.Name);
                     Assert.Equal("https://www.example.com/LICENSE", item.License.Url);
@@ -330,19 +367,56 @@ namespace CycloneDX.Tests
             mockHttp.When("https://api.nuget.org/v3-flatcontainer/PackageName/1.2.3/PackageName.nuspec")
                 .Respond("application/xml", mockResponseContent);
             var client = mockHttp.ToHttpClient();
+            
+            var licenseMemCache = new LicenseMemoryCacheRepository();
             var nugetService = new NugetService(
                 new MockFileSystem(),
                 new List<string>(),
+                licenseMemCache,
                 null,
                 client);
 
             var component = await nugetService.GetComponentAsync("PackageName", "1.2.3", Component.ComponentScope.Required).ConfigureAwait(false);
 
             Assert.Collection(component.Licenses,
-                item => {
+                item =>
+                {
                     Assert.Null(item.License.Id);
                     Assert.Null(item.License.Name);
                     Assert.Equal("https://www.example.com/license", item.License.Url);
+                });
+        }
+
+        [Fact] //(Skip = "More if an integration test..run on demand")]
+        public async Task GetComponent_DoesNotReturnOther()
+        {
+            IFileSystem fileSystem = new FileSystem();
+            IProjectAssetsFileService projectAssetsFileService = new ProjectAssetsFileService(fileSystem);
+            IDotnetCommandService dotnetCommandService = new DotnetCommandService();
+            IDotnetUtilsService dotnetUtilsService = new DotnetUtilsService(fileSystem, dotnetCommandService);
+
+            var client = new HttpClient();
+            var licenseService = new List<ILicenseLookupService>();
+            licenseService.Add(new GithubService(client));
+            licenseService.Add(new ClearlyDefinedService(client));
+            licenseService.Add(new LibrariesIOService(client, "fed9c408e9a813550ee2bd8e34124761"));
+
+            var packageCachePathsResult = dotnetUtilsService.GetPackageCachePaths();
+            var licenseMemCache = new LicenseMemoryCacheRepository();
+            var nugetService = new NugetService(
+                Program.fileSystem,
+                packageCachePathsResult.Result,
+                licenseMemCache,
+                licenseService,
+                client);
+
+            var component = await nugetService.GetComponentAsync("Twilio", "5.74.0", Component.ComponentScope.Required).ConfigureAwait(false);
+
+            Assert.Collection(component.Licenses,
+                item =>
+                {
+                    Assert.NotNull(item.License.Id);
+                    Assert.NotNull(item.License.Name);
                 });
         }
     }
