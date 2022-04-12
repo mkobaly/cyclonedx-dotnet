@@ -28,6 +28,7 @@ using NuspecReader = NuGet.Packaging.NuspecReader;
 using CycloneDX.Models;
 using CycloneDX.Extensions;
 using CycloneDX.Models.v1_3;
+using System.Linq;
 
 namespace CycloneDX.Services
 {
@@ -41,10 +42,13 @@ namespace CycloneDX.Services
     {
         private string _baseUrl;
         private HttpClient _httpClient;
-        private IGithubService _githubService;
-        private IFileSystem _fileSystem;
-        private List<string> _packageCachePaths;
-        private bool _disableHashComputation;
+        //private IGithubService _githubService;
+        //private IClearlyDefinedService _clearlyDefinedService;
+        private readonly ILicenseCacheRepository _licenseCache;
+        private readonly IEnumerable<ILicenseLookupService> _licenseLookupServices;
+        private readonly IFileSystem _fileSystem;
+        private readonly List<string> _packageCachePaths;
+        private readonly bool _disableHashComputation;
         private const string _nuspecExtension = ".nuspec";
         private const string _nupkgExtension = ".nupkg";
         private const string _sha512Extension = ".nupkg.sha512";
@@ -53,17 +57,21 @@ namespace CycloneDX.Services
         public NugetService(
             IFileSystem fileSystem,
             List<string> packageCachePaths,
-            IGithubService githubService,
+            ILicenseCacheRepository licenseCache,
+            IEnumerable<ILicenseLookupService> licenseLookupServices,
             HttpClient httpClient,
             string baseUrl = null,
             bool disableHashComputation = false)
         {
             _fileSystem = fileSystem;
             _packageCachePaths = packageCachePaths;
-            _githubService = githubService;
+            _licenseLookupServices = licenseLookupServices;
+            _licenseCache = licenseCache;
             _httpClient = httpClient;
             _baseUrl = baseUrl == null ? "https://api.nuget.org/v3-flatcontainer/" : baseUrl;
             _disableHashComputation = disableHashComputation;
+
+            if (_licenseLookupServices == null) _licenseLookupServices = new List<ILicenseLookupService>();
         }
 
         internal string GetCachedNuspecFilename(string name, string version)
@@ -105,7 +113,7 @@ namespace CycloneDX.Services
         {
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(version)) return null;
 
-            Console.WriteLine("Retrieving " + name + " " + version);
+            Console.WriteLine("Nuget retrieving " + name + " " + version);
 
             var component = new Component
             {
@@ -175,7 +183,8 @@ namespace CycloneDX.Services
 
             if (hashBytes != null)
             {
-                var hex = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+                //Put in lowercase or else Dependency tracker throws exception on uppercase sha512 (could be fixed there)
+                var hex = BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLower(System.Globalization.CultureInfo.InvariantCulture);
                 Hash h = new Hash()
                 {
                     Alg = Hash.HashAlgorithm.SHA_512,
@@ -229,34 +238,47 @@ namespace CycloneDX.Services
                 };
                 licenseMetadata.LicenseExpression.OnEachLeafNode(licenseProcessor, null);
             }
-            else
+            else //unable to determine license via nuget. used configured lookup services to resolve
             {
                 var licenseUrl = nuspecReader.GetLicenseUrl();
-                if (!string.IsNullOrEmpty(licenseUrl))
+                License license = null;
+                //first check if in file cache
+                var licenseId = await _licenseCache.Read(component.Name, component.Version).ConfigureAwait(false);
+                if(!string.IsNullOrWhiteSpace(licenseId))
                 {
-                    Models.v1_3.License license = null;
-
-                    if (_githubService != null)
+                    license = new License
                     {
-                        license = await _githubService.GetLicenseAsync(licenseUrl).ConfigureAwait(false);
-                    }
-
-                    if (license == null)
-                    {
-                        license = new Models.v1_3.License
-                        {
-                            Url = licenseUrl
-                        };
-                    }
-
-                    component.Licenses = new List<LicenseChoice>
-                    {
-                        new LicenseChoice
-                        {
-                            License = license
-                        }
+                        Id = licenseId,
+                        Name = licenseId,
+                        Url = licenseUrl
                     };
                 }
+                
+                if (license == null)
+                {
+                    //lowest priority goes first
+                    foreach (var ls in _licenseLookupServices.OrderBy(x => x.Priority))
+                    {
+                        license = await ls.GetLicenseAsync(nuspecReader);
+                        if (license != null)
+                        {
+                            //save to cache and stop looking
+                            await _licenseCache.Write(component.Name, component.Version, license.Id).ConfigureAwait(false);
+                            break;
+                        }
+                    }
+                }
+
+                if (license == null) license = new License();
+                
+                license.Url = licenseUrl; //ensure licenseURL set
+                component.Licenses = new List<LicenseChoice>
+                {
+                    new LicenseChoice
+                    {
+                        License = license
+                    }
+                };
             }
 
             var projectUrl = nuspecReader.GetProjectUrl();

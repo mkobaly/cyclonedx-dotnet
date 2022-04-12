@@ -20,6 +20,8 @@ using System.Threading.Tasks;
 using Xunit;
 using RichardSzalay.MockHttp;
 using CycloneDX.Services;
+using NuGet.Packaging;
+using System.Xml.Linq;
 
 namespace CycloneDX.Tests
 {
@@ -34,13 +36,25 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
+
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
             
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -55,19 +69,31 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/raw/master/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
+
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/raw/master/LICENSE").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
         }
 
-        [Fact(Skip="Currently failing as GitHub license API only returns the current license")]
+        [Fact(Skip = "Currently failing as GitHub license API only returns the current license")]
         public async Task GitLicence_FromVersionTag()
         {
             var mockResponseContent = @"{
@@ -76,14 +102,24 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/v1.2.3/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=v1.2.3")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/v1.2.3/LICENSE").ConfigureAwait(false);
-            
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
+
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
         }
@@ -97,14 +133,24 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.md</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.md").ConfigureAwait(false);
-            
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
+
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
         }
@@ -118,14 +164,24 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.txt</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.txt").ConfigureAwait(false);
-            
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
+
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
         }
@@ -139,13 +195,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.TXT</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.TXT").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -160,13 +226,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.bsd</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.bsd").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -181,13 +257,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.BSD</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.BSD").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -202,13 +288,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.mit</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.mit").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -223,13 +319,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.MIT</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE.MIT").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -244,13 +350,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE-MIT</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/LICENSE-MIT").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -265,13 +381,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/License.txt</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/License.txt").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -286,13 +412,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/license.txt</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://github.com/CycloneDX/cyclonedx-dotnet/blob/master/license.txt").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -307,14 +443,24 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://raw.githubusercontent.com/CycloneDX/cyclonedx-dotnet/master/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://raw.githubusercontent.com/CycloneDX/cyclonedx-dotnet/master/LICENSE").ConfigureAwait(false);
-            
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
+
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
         }
@@ -328,13 +474,23 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://raw.github.com/CycloneDX/cyclonedx-dotnet/master/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
                 .Respond("application/json", mockResponseContent);
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client);
 
-            var license = await githubService.GetLicenseAsync("https://raw.github.com/CycloneDX/cyclonedx-dotnet/master/LICENSE").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            var license = await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             Assert.Equal("LicenseSpdxId", license.Id);
             Assert.Equal("Test License", license.Name);
@@ -349,6 +505,15 @@ namespace CycloneDX.Tests
                     ""name"": ""Test License""
                 }
             }";
+            var nuspec =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <package xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+                    <metadata>
+                    <id>cyclonedx-dotnet</id>
+                    <version>1.8</version>
+                    <licenseUrl>https://raw.githubusercontent.com/CycloneDX/cyclonedx-dotnet/master/LICENSE</licenseUrl>
+                    </metadata>
+                </package>";
             var mockHttp = new MockHttpMessageHandler();
             mockHttp
                 .Expect("https://api.github.com/repos/CycloneDX/cyclonedx-dotnet/license?ref=master")
@@ -357,7 +522,8 @@ namespace CycloneDX.Tests
             var client = mockHttp.ToHttpClient();
             var githubService = new GithubService(client, "Aladdin", "open sesame");
 
-            await githubService.GetLicenseAsync("https://raw.githubusercontent.com/CycloneDX/cyclonedx-dotnet/master/LICENSE").ConfigureAwait(false);
+            var nuspecReader = new NuspecReader(XDocument.Parse(nuspec));
+            await githubService.GetLicenseAsync(nuspecReader).ConfigureAwait(false);
 
             mockHttp.VerifyNoOutstandingExpectation();
         }

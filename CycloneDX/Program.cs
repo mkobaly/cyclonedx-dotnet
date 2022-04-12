@@ -1,3 +1,5 @@
+
+
 // This file is part of CycloneDX Tool for .NET
 //
 // Licensed under the Apache License, Version 2.0 (the “License”);
@@ -103,6 +105,15 @@ namespace CycloneDX {
         [Option(Description = "Override the default BOM metadata component type (defaults to application).", ShortName = "st", LongName = "set-type")]
         public Component.Classification setType { get; }
 
+        [Option(Description = "Directory to store license cache. Useful to reduce load on 3rd party license checkers.", ShortName = "lcp", LongName = "license-cache-path")]
+        public string licenseCachePath { get; }
+
+        [Option(Description = "Optionally use https://libraries.io for license resolution. First need to signup for free account", ShortName = "lak", LongName = "libraries-api-key")]
+        public string librariesIOApiKey { get; }
+
+        [Option(Description = "Optionally disable Clearly defined license resolution", ShortName = "dcl", LongName = "disable-clearly-defined-licenses")]
+        bool disableClearlyDefinedLicenses { get; set; }
+
         static internal IFileSystem fileSystem = new FileSystem();
         static internal HttpClient httpClient = new HttpClient();
         static internal IProjectAssetsFileService projectAssetsFileService = new ProjectAssetsFileService(fileSystem);
@@ -119,6 +130,7 @@ namespace CycloneDX {
             if (version)
             {
                 Console.WriteLine(Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+                Console.WriteLine(Assembly.GetExecutingAssembly().Location);
                 return 0;
             }
 
@@ -189,10 +201,35 @@ namespace CycloneDX {
                     githubService = new GithubService(new HttpClient());
                 }
             }
+
+            //License lookup services setup
+            var licenseLookupServices = new List<ILicenseLookupService>();
+            if (githubService != null)
+            {
+                licenseLookupServices.Add(githubService);
+            }
+            if (!disableClearlyDefinedLicenses)
+            {
+                licenseLookupServices.Add(new ClearlyDefinedService(httpClient));
+            }
+            if (!string.IsNullOrEmpty(librariesIOApiKey))
+            {
+                licenseLookupServices.Add(new LibrariesIOService(httpClient, librariesIOApiKey));
+            }
+
+
+            //Cache setup
+            ILicenseCacheRepository licenseCache = new LicenseMemoryCacheRepository();
+            if (Directory.Exists(licenseCachePath))
+            {
+                licenseCache = new LicenseFileCacheRepository(licenseCachePath);
+            }
+
             var nugetService = new NugetService(
                 Program.fileSystem,
                 packageCachePathsResult.Result,
-                githubService,
+                licenseCache,
+                licenseLookupServices,
                 Program.httpClient,
                 baseUrl,
                 disableHashComputation);
@@ -283,11 +320,20 @@ namespace CycloneDX {
                     {
                         foreach (var dep in package.Dependencies)
                         {
-                            transitiveDepencies.Add(bomRefLookup[(dep.Key.ToLower(CultureInfo.InvariantCulture), dep.Value.ToLower(CultureInfo.InvariantCulture))]);
-                            packageDepencies.Dependencies.Add(new Dependency
+                            bomRefLookup.TryGetValue((dep.Key.ToLower(CultureInfo.InvariantCulture), dep.Value.ToLower(CultureInfo.InvariantCulture)), out string bomRef);
+                            if (bomRef != null) //This could happen when multiple nuget packages have same dependency but diff versions. Nuget will pick highest so lower numbers will not exist
                             {
-                                Ref = bomRefLookup[(dep.Key.ToLower(CultureInfo.InvariantCulture), dep.Value.ToLower(CultureInfo.InvariantCulture))]
-                            });
+                                transitiveDepencies.Add(bomRef);
+                                packageDepencies.Dependencies.Add(new Dependency
+                                {
+                                    Ref = bomRef
+                                });
+                            }
+                            //transitiveDepencies.Add(bomRefLookup[(dep.Key.ToLower(CultureInfo.InvariantCulture), dep.Value.ToLower(CultureInfo.InvariantCulture))]);
+                            //packageDepencies.Dependencies.Add(new Dependency
+                            //{
+                            //    Ref = bomRefLookup[(dep.Key.ToLower(CultureInfo.InvariantCulture), dep.Value.ToLower(CultureInfo.InvariantCulture))]
+                            //});
                         }
                     }
                     dependencies.Add(packageDepencies);

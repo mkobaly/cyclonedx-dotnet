@@ -36,5 +36,7 @@ namespace CycloneDX
             return filename.ToLowerInvariant().EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) ||
                 filename.ToLowerInvariant().EndsWith(".vbproj", StringComparison.OrdinalIgnoreCase);
         }
+
+        public static string[] UnknownLicenseIds = new []{ "other","unknown", "noassertion" };
     }
 }
