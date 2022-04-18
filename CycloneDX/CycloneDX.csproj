@@ -6,9 +6,7 @@
     <PackageId>CycloneDX</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>A .NET Core global tool to generate CycloneDX bill-of-material documents for use with Software Composition Analysis (SCA).</Description>
-    <PackAsTool>true</PackAsTool>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <ToolCommandName>dotnet-CycloneDX</ToolCommandName>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OsEnvironment )'=='windows'">
@@ -22,13 +20,13 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0" />
-    <PackageReference Include="System.IO.Abstractions" Version="14.0.13" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
+    <PackageReference Include="System.IO.Abstractions" Version="16.1.25" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="CycloneDX.Core" Version="4.0.0" />
-    <PackageReference Include="nuget.projectmodel" Version="6.0.0" />
+    <PackageReference Include="CycloneDX.Core" Version="5.2.0" />
+    <PackageReference Include="nuget.projectmodel" Version="6.1.0" />
   </ItemGroup>
 </Project>

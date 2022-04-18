@@ -22,7 +22,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using NuGet.Packaging;
-using License = CycloneDX.Models.v1_3.License;
+using License = CycloneDX.Models.License;
 
 namespace CycloneDX.Services
 {
@@ -30,6 +30,7 @@ namespace CycloneDX.Services
     {
         int Priority { get; }
         Task<License> GetLicenseAsync(NuspecReader nuspecReader);
+        string DisplayName { get; }
     }
 
     #region "Types for deserialization"
@@ -179,6 +180,7 @@ namespace CycloneDX.Services
             _httpClient = httpClient;
         }
 
+        public string DisplayName => "Clearly Defined (https://clearlydefined.io)";
         public int Priority => 5;
 
         /// <summary>

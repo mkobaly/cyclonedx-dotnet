@@ -22,7 +22,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using NuGet.Packaging;
-using License = CycloneDX.Models.v1_3.License;
+using License = CycloneDX.Models.License;
 
 namespace CycloneDX.Services
 {
@@ -99,6 +99,7 @@ namespace CycloneDX.Services
             _apiKey = apiKey;
         }
 
+        public string DisplayName => "Libraries.io (https://libraries.io/api/nuget)";
         public int Priority => 4;
 
         /// <summary>
@@ -141,7 +142,7 @@ namespace CycloneDX.Services
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                Console.Error.WriteLine($"Libraries.io, unable to find package {id} VersionL {version}");
+                Console.WriteLine($"Libraries.io, unable to find package {id} Version: {version}");
             }
             else
             {

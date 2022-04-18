@@ -23,7 +23,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using CycloneDX.Models.v1_3;
+using CycloneDX.Models;
 using Xunit;
 using Moq;
 using RichardSzalay.MockHttp;
@@ -330,7 +330,7 @@ namespace CycloneDX.Tests
             var licenseMemCache = new LicenseMemoryCacheRepository();
             mockGithubService
                 .Setup(service => service.GetLicenseAsync(It.IsAny<NuspecReader>()))
-                .ReturnsAsync(new Models.v1_3.License
+                .ReturnsAsync(new Models.License
                 {
                     Id = "TestLicenseId",
                     Name = "Test License",

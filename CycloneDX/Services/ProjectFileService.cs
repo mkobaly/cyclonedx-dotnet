@@ -188,7 +188,7 @@ namespace CycloneDX.Services
             }
 
             Console.WriteLine();
-            Console.WriteLine($"» Analyzing: {projectFilePath}");
+             Console.WriteLine($"» Analyzing: {projectFilePath}");
             Console.WriteLine("  Getting project references");
 
             var projectReferences = new HashSet<string>();
@@ -214,7 +214,7 @@ namespace CycloneDX.Services
 
             if (projectReferences.Count == 0)
             {
-                Console.Error.WriteLine("  No project references found");
+                Console.WriteLine("No project references found for " + projectFilePath);
             }
 
             return projectReferences;

@@ -25,7 +25,7 @@ using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CycloneDX.Models;
-using License = CycloneDX.Models.v1_3.License;
+using License = CycloneDX.Models.License;
 using NuGet.Packaging;
 
 namespace CycloneDX.Services
@@ -72,6 +72,8 @@ namespace CycloneDX.Services
             new Regex(@"^https?\:\/\/github\.com\/(?<repositoryId>[^\/]+\/[^\/]+)\/((blob)|(raw))\/(?<refSpec>[^\/]+)\/[Ll][Ii][Cc][Ee][Nn][Ss][Ee]((\.|-)((md)|([Tt][Xx][Tt])|([Mm][Ii][Tt])|([Bb][Ss][Dd])))?$"),
             new Regex(@"^https?\:\/\/raw\.github(usercontent)?\.com\/(?<repositoryId>[^\/]+\/[^\/]+)\/(?<refSpec>[^\/]+)\/[Ll][Ii][Cc][Ee][Nn][Ss][Ee]((\.|-)((md)|([Tt][Xx][Tt])|([Mm][Ii][Tt])|([Bb][Ss][Dd])))?$"),
         };
+
+        public string DisplayName => "Github (https://api.github.com)";
 
         public int Priority => 3;
 
@@ -152,7 +154,8 @@ namespace CycloneDX.Services
             {
                 Console.Error.WriteLine($"GitHub license resolution failed: {exc.Message}");
                 Console.Error.WriteLine("For offline environments use --disable-github-licenses to disable GitHub license resolution.");
-                throw new GitHubLicenseResolutionException("GitHub license resolution failed.", exc);
+                return null; //don't throw since we have other license lookup services
+                //throw new GitHubLicenseResolutionException("GitHub license resolution failed.", exc);
             }
 
             if (githubLicense == null) {
