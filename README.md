@@ -163,3 +163,21 @@ a ready to go development environment with VS Code. You can open a Gitpod
 hosted development environment in your browser.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CycloneDX/cyclonedx-dotnet)
+
+## Self contained exe
+
+If not wanting to use dotnet tool, we can also create a single binary output using dotnet publish
+```sh
+ dotnet publish CycloneDX/CycloneDX.csproj -c Release -o ./output --framework net6.0 --runtime linux-x64 --self-contained=true /p:PublishTrimmed=true /p:PublishSingleFile=true
+```
+
+## Changes in this fork
+- BugFix: Ensure sha512 is lowercase or else Dependency Track will not allow edits
+- BigFix: issue where nested dependencies not found in dictionary.
+   Ex: proj A -> ref -> Lib A -> ref -> Lib B:1.2.5
+       proj B -> ref -> Lib C -> ref -> Lib B:1.5.0
+       under this scenario Lib B:1.5.0 will be used but cycloneDX will fail to resolve 1.2.5 in its dictionary
+- support multiple license lookups (Github, libraries.io, clearlyDefined.io)
+- optionally use file cache for library lookups to reduce load on 3rd party apis. This also allows you to override a license to set a value
+- removed support for .net 2.1 since its not supported anymore
+- added net 6 support and pulled in latest nuget references

@@ -15,20 +15,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) OWASP Foundation. All Rights Reserved.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
-using System.Text.Json;
-using System.Threading.Tasks;
-using CycloneDX.Models;
-using License = CycloneDX.Models.License;
-using System.IO;
-using NuGet.Packaging;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace CycloneDX.Services
 {
@@ -40,6 +29,7 @@ namespace CycloneDX.Services
     public interface ILicenseCacheRepository
     {
         Task<string> Read(string id, string version);
+
         Task Write(string id, string version, string licenseId);
     }
 
@@ -49,6 +39,7 @@ namespace CycloneDX.Services
     public class LicenseFileCacheRepository : ILicenseCacheRepository
     {
         private readonly string _rootPath;
+
         public LicenseFileCacheRepository(string rootPath)
         {
             _rootPath = Path.Combine(rootPath, "cyclonedx_cache");
@@ -77,7 +68,7 @@ namespace CycloneDX.Services
                     }
                 }
             }
-            await File.AppendAllTextAsync(file, content).ConfigureAwait(false);
+            await File.AppendAllLinesAsync(file, new[] { content }).ConfigureAwait(false);
         }
 
         public async Task<string> Read(string id, string version)
@@ -92,7 +83,7 @@ namespace CycloneDX.Services
                     //* special case where as enduser you can now dictate what license you wanto to use for a given library
                     // This is good for internal libraries or ones that are not standard. You an set it once and the going forward
                     // it will always use that value.
-                    if (parts[0] == version || parts[0] == "*")  
+                    if (parts[0] == version || parts[0] == "*")
                     {
                         return parts[1];
                     }
@@ -108,7 +99,7 @@ namespace CycloneDX.Services
     public class LicenseMemoryCacheRepository : ILicenseCacheRepository
     {
         private readonly ConcurrentDictionary<string, string> _cache = new ConcurrentDictionary<string, string>();
-        
+
         public Task Write(string id, string version, string licenseId)
         {
             var key = $"{id}/{version}";

@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
     <PackageId>CycloneDX</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>A .NET Core global tool to generate CycloneDX bill-of-material documents for use with Software Composition Analysis (SCA).</Description>
-    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishReadyToRun>false</PublishReadyToRun>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OsEnvironment )'=='windows'">
